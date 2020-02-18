@@ -24,6 +24,8 @@ TetrominoBlobRender.h
 MacroIOMessage.h
 MacroIOMessage.cpp
 ${TexturedTriangle_RESOURCES})
+
+target_compile_features(MyApplication PRIVATE cxx_std_17)
 target_link_libraries(MyApplication PRIVATE
     Corrade::Main
     Magnum::Application
