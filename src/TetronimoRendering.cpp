@@ -1,6 +1,6 @@
 #include "TetronimoRendering.h"
 
-#include "Sprite.h"
+#include "drawobjey/Sprite.h"
 
 #include <Magnum/Math/Color.h>
 

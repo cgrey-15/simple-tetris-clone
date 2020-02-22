@@ -4,7 +4,7 @@
 #include <tuple>
 #include <cstdint>
 
-#include "TetrisBoard.h"
+#include "board/TetrisBoard.h"
 
 namespace tetris_clone {
 	using Vector2ui = std::pair<unsigned int, unsigned int>;

@@ -5,7 +5,7 @@
 #include<Magnum/Math/Vector2.h>
 #include<Magnum/Shaders/Flat.h>
 
-#include "Tetronimo.h"
+#include "tetromino/Tetronimo.h"
 
 namespace tetris_clone {
 	class Tetronimo;

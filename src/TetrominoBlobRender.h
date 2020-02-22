@@ -1,7 +1,7 @@
 #ifndef __TETROMINO_BLOB_RENDER_H__
 #define __TETRONIMO_BLOB_RENDER_H__
 
-#include "Sprite.h"
+#include "drawobjey/Sprite.h"
 #include<Magnum/SceneGraph/Drawable.h>
 #include<Magnum/GL/Mesh.h>
 #include<Corrade/Containers/Array.h>
