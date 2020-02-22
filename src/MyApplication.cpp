@@ -29,14 +29,14 @@
 
 #include <Magnum/Timeline.h>
 
-#include "Sprite.h"
-#include "RenderTiles.h"
+#include "drawobjey/Sprite.h"
+#include "drawobjey/RenderTiles.h"
 #include "TexturedTriangleShader.h"
 #include "Utilities.hpp"
 
-#include "TetrisBoard.h"
+#include "board/TetrisBoard.h"
 #include "TetronimoRendering.h"
-#include "Tetronimo.h"
+#include "tetromino/Tetronimo.h"
 #include "TetrominoBlobRender.h"
 
 #include "MacroIOMessage.h"
