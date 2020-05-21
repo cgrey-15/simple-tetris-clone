@@ -1,0 +1,17 @@
+{"asset" : [
+	{
+		"id" : 132,
+		"type" : "AnimatedTexture",
+		"name" : "TestSprite::animation_folder::Animation_folder",
+		"alias": "Animation_folder",
+		"packgroup":  "spritey"
+	},
+	{
+		"id" : 133,
+		"type" : "Texture",
+		"name" : "TestSprite::animation_folder::Background",
+		"alias": "Background",
+		"packgroup":  "spritey"
+	}
+]
+}

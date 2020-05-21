@@ -4,11 +4,16 @@
 #include <tuple>
 #include <cstdint>
 
+//#include <Corrade/Containers/ArrayView.h>
+//#include <Corrade/Utility/StlForwardArray.h>
+
 #include "board/TetrisBoard.h"
 
 namespace tetris_clone {
 	using Vector2ui = std::pair<unsigned int, unsigned int>;
 	using Vector2i = std::pair<int, int>;
+	using Vector2c = std::pair<int8_t, int8_t>;
+	using Vector2s = std::pair<int16_t, int16_t>;
 
 	//class TetrisBoard;
 
@@ -53,17 +58,22 @@ namespace tetris_clone {
 		Rotation rotation() const { return _direction; }
 		Vector2i getRotatedPositionOf(const char slot) const noexcept;
 
-		tetris_clone::TetrisBoard::TetrominoTile toTile() const noexcept;
+		tetris_clone::TetrominoTile toTile() const noexcept;
+
+		static const std::array<Vector2c, 4>& tetroPositions(const Rotation r) noexcept;
+		static void tetroPositions(Vector2c(&positions)[4], const Rotation r, const TetrominoTile tile);
 
 	private:
 		//static Flavor extractTetronimo(Flavor* src, size_t index, size_t size);
 		Vector2i _position;
 		uint16_t _aabb;
-		const Vector2i (*_rotationState)[4];
+		const std::array<Vector2c, 4>* _rotationState;//(*_rotationState)[4];
 		Flavor _classification;
 
 		Rotation _direction;
 	};
+
+	const auto size = sizeof(Tetronimo);
 }
 
 #endif

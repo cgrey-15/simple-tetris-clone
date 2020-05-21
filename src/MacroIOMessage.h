@@ -2,6 +2,7 @@
 #define MACRO_IO_MESSAGE_H
 
 #include <iosfwd>
+#include <fstream>
 #include <tuple>
 #include "Corrade/Containers/Pointer.h"
 

@@ -1,0 +1,9 @@
+[submodule "friends/cute_headers"]
+	path = friends/cute_headers
+	url = https://github.com/RandyGaul/cute_headers.git
+[submodule "friends/stb"]
+	path = friends/stb
+	url = https://github.com/nothings/stb.git
+[submodule "friends/ctla"]
+	path = friends/ctla
+	url = https://github.com/moroneyt/ctla.git

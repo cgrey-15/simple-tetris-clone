@@ -3,29 +3,59 @@
 #include <limits>
 #include <random>
 #include <ciso646>
+#include <type_traits>
+#include "internal/RotGenConstexpr.hpp"
 
+#if 0
+constexpr tetris_clone::Vector2i S[4] = {{ 0, 1 }, { 1, 1 }, { 1, 2 }, { 2, 2 }};
+constexpr tetris_clone::Vector2i Z[4] = {{ 0, 2 },{ 1, 2 },{ 1, 1 },{ 2, 1 }};
+constexpr tetris_clone::Vector2i T[4] = {{ 1, 2 },{ 0, 1 },{ 1, 1 },{ 2, 1 }};
+constexpr tetris_clone::Vector2i J[4] = {{ 0, 1 },{ 1, 1 },{ 2, 1 },{ 2, 2 }};
+constexpr tetris_clone::Vector2i L[4] = {{ 0, 2 },{ 0, 1 },{ 1, 1 },{ 2, 1 }};
+constexpr tetris_clone::Vector2i I[4] = {{ 1, 2 },{ 2,2 },{ 3, 2 },{ 4, 2 }};
+constexpr tetris_clone::Vector2i O[4] = {{ 1, 2 },{ 2, 2 },{ 2, 1 },{ 1, 1 }};
+#else
+constexpr std::array<tetris_clone::Vector2i, 4> S_LST = { {{ 0, 1 }, { 1, 1 }, { 1, 2 }, { 2, 2 }} };
+constexpr std::array<tetris_clone::Vector2i, 4> Z_LST = { {{ 0, 2 },{ 1, 2 },{ 1, 1 },{ 2, 1 }} };
+constexpr std::array<tetris_clone::Vector2i, 4> T_LST = {{{ 1, 2 },{ 0, 1 },{ 1, 1 },{ 2, 1 }} };
+constexpr std::array<tetris_clone::Vector2i, 4> J_LST = {{{ 0, 1 },{ 1, 1 },{ 2, 1 },{ 2, 2 }} };
+constexpr std::array<tetris_clone::Vector2i, 4> L_LST = {{{ 0, 2 },{ 0, 1 },{ 1, 1 },{ 2, 1 }} };
+constexpr std::array<tetris_clone::Vector2i, 4> I_LST = {{{ 1, 2 },{ 2,2 },{ 3, 2 },{ 4, 2 }} };
+constexpr std::array<tetris_clone::Vector2i, 4> O_LST = {{{ 1, 2 },{ 2, 2 },{ 2, 1 },{ 1, 1 }} };
+#endif
 
 
 static std::mt19937 rng_engine{ 137 };
 static std::uniform_int_distribution<unsigned int> dist{ 0, 6 };
 
-const static tetris_clone::Vector2i S_ROTATIONS[4][4] =
+const static std::array<std::array<tetris_clone::Vector2c, 4>, 4> S_ROTATIONS = ::all_dir_test<tetris_clone::Vector2c>(S_LST);
+const static std::array<std::array<tetris_clone::Vector2c, 4>, 4> Z_ROTATIONS = ::all_dir_test<tetris_clone::Vector2c>(Z_LST);
+const static std::array<std::array<tetris_clone::Vector2c, 4>, 4> T_ROTATIONS = ::all_dir_test<tetris_clone::Vector2c>(T_LST);
+const static std::array<std::array<tetris_clone::Vector2c, 4>, 4> J_ROTATIONS = ::all_dir_test<tetris_clone::Vector2c>(J_LST);
+const static std::array<std::array<tetris_clone::Vector2c, 4>, 4> L_ROTATIONS = ::all_dir_test<tetris_clone::Vector2c>(L_LST);
+const static std::array<std::array<tetris_clone::Vector2c, 4>, 4> I_ROTATIONS = ::all_dir_test<tetris_clone::Vector2c, 2>(I_LST);
+const static std::array<std::array<tetris_clone::Vector2c, 4>, 4> O_ROTATIONS = ::all_dir_test<tetris_clone::Vector2c>(O_LST);
+
+#if 0
+const static tetris_clone::Vector2c S_ROTATIONS[4][4] =
 {
-	{{0, 1}, {1, 1}, {1, 2}, {2, 2}},
-{{ 1, 2}, {1, 1}, {2, 1}, {2, 0} },
-{{2, 1}, {1, 1}, {1, 0}, {0, 0}},
-{{1, 0}, {1, 1}, {0, 1}, {0, 2}}
+	{aggr_westward<tetris_clone::Vector2c>(S2)},//{S[0], S[1], S[2], S[3]},
+{::eastward(::S[0]), ::eastward(::S[1]), ::eastward(::S[2]), ::eastward(::S[3])},//{{ 1, 2}, {1, 1}, {2, 1}, {2, 0} },
+{::southward(::S[0]), ::southward(::S[1]), ::southward(::S[2]), ::southward(::S[3])},//{{2, 1}, {1, 1}, {1, 0}, {0, 0}},
+{::westward(::S[0]), ::westward(::S[1]), ::westward(::S[2]), ::westward(::S[3]) }//{{1, 0}, {1, 1}, {0, 1}, {0, 2}}
 };
 
-const static tetris_clone::Vector2i Z_ROTATIONS[4][4] =
+//const static tetris_clone::Vector2c S_ROTATIONS[4][4] = S_ROTATIONSME;
+
+const static tetris_clone::Vector2c Z_ROTATIONS[4][4] =
 {
-	{{0,2}, {1, 2}, {1, 1}, {2, 1}},
-{{2, 2}, {2, 1}, {1, 1}, {1, 0}},
-{{2, 0}, {1, 0}, {1, 1}, {0, 1}},
-{{0, 0}, {0, 1}, {1, 1}, {1, 2}}
+	{::Z[0], ::Z[1], ::Z[2], ::Z[3] },//{{0,2}, {1, 2}, {1, 1}, {2, 1}},
+	{eastward(::Z[0]), eastward(::Z[1]), eastward(::Z[2]), eastward(::Z[3])},//{{2, 2}, {2, 1}, {1, 1}, {1, 0}},
+	{southward(::Z[0]), southward(::Z[2]), southward(::Z[3]), southward(::Z[3])},//{{2, 0}, {1, 0}, {1, 1}, {0, 1}},
+	{westward(::Z[0]), westward(::Z[1]), westward(::Z[2]), westward(::Z[3])}//{{0, 0}, {0, 1}, {1, 1}, {1, 2}}
 };
 
-const static tetris_clone::Vector2i T_ROTATIONS[4][4] =
+const static tetris_clone::Vector2c T_ROTATIONS[4][4] =
 {
 	{{1, 2}, {0, 1}, {1, 1},{2, 1}},
 {{2, 1}, {1, 2}, {1, 1}, {1, 0}},
@@ -33,7 +63,7 @@ const static tetris_clone::Vector2i T_ROTATIONS[4][4] =
 {{0, 1}, {1, 0}, {1, 1}, {1, 2}}
 };
 
-const static tetris_clone::Vector2i J_ROTATIONS[4][4] =
+const static tetris_clone::Vector2c J_ROTATIONS[4][4] =
 {
 	{{0, 1}, {1, 1}, {2, 1}, {2, 2}},
 {{1, 2}, {1, 1}, {1, 0}, {2, 0}},
@@ -50,7 +80,7 @@ const static tetris_clone::Vector2i L_ROTATIONS[4][4] =
 {{1, 2}, {1, 1}, {1, 0}, {0, 0} }
 };
 #else
-const static tetris_clone::Vector2i L_ROTATIONS[4][4] =
+const static tetris_clone::Vector2c L_ROTATIONS[4][4] =
 {
 	{{0, 2}, {0, 1}, {1, 1}, {2, 1}},
 {{2, 2}, {1, 2}, {1, 1}, {1, 0}},
@@ -60,20 +90,21 @@ const static tetris_clone::Vector2i L_ROTATIONS[4][4] =
 
 #endif
 
-const static tetris_clone::Vector2i I_ROTATIONS[4][4] =
+const static tetris_clone::Vector2c I_ROTATIONS[4][4] =
 { {{1, 2},{2, 2},{3,2},{4,2}},
 {{2, 3}, {2, 2}, {2, 1}, {2, 0}},
 {{3, 2}, {2, 2}, {1, 2}, {0,2}},
 {{2, 1}, {2, 2}, {2, 3}, {2, 4}}
 };
 
-const static tetris_clone::Vector2i O_ROTATIONS[4][4] =
+const static tetris_clone::Vector2c O_ROTATIONS[4][4] =
 {
 { {1,2}, {2, 2}, {2, 1}, {1, 1} },
 { {2, 1}, {2, 0}, {1, 0}, {1, 1} },
 { {1, 0}, {0, 0}, {0, 1}, {1, 1} },
 { {0, 1}, {0, 2}, {1, 2}, {1, 1} }
 };
+#endif
 
 
 #if 1
@@ -107,17 +138,17 @@ tetris_clone::Tetronimo& tetris_clone::Tetronimo::operator--() noexcept {
 	}
 #endif
 	switch (_direction) {
-	case Rotation::West: _direction = Rotation::North;
-		_rotationState -= 3;
+	case Rotation::North: _direction = Rotation::West;
+		_rotationState += 3;
 		break;
-	case Rotation::North: _direction = Rotation::East;
-		++_rotationState;
+	case Rotation::East: _direction = Rotation::North;
+		--_rotationState;
 		break;
-	case Rotation::East: _direction = Rotation::South;
-		++_rotationState;
+	case Rotation::South: _direction = Rotation::East;
+		--_rotationState;
 		break;
-	case Rotation::South: _direction = Rotation::West;
-		++_rotationState;
+	case Rotation::West: _direction = Rotation::South;
+		--_rotationState;
 		break;
 	}
 
@@ -145,17 +176,17 @@ tetris_clone::Tetronimo& tetris_clone::Tetronimo::operator++() noexcept {
 	}
 #else
 	switch (_direction) {
-	case Rotation::East: _direction = Rotation::North;
-		--_rotationState;
+	case Rotation::North: _direction = Rotation::East;
+		++_rotationState;
 		break;
-	case Rotation::South: _direction = Rotation::East;
-		--_rotationState;
+	case Rotation::East: _direction = Rotation::South;
+		++_rotationState;
 		break;
-	case Rotation::West: _direction = Rotation::South;
-		--_rotationState;
+	case Rotation::South: _direction = Rotation::West;
+		++_rotationState;
 		break;
-	case Rotation::North: _direction = Rotation::West;
-		_rotationState += 3;
+	case Rotation::West: _direction = Rotation::North;
+		_rotationState -= 3;
 		break;
 	}
 #endif
@@ -394,15 +425,55 @@ tetris_clone::Tetronimo::Flavor tetris_clone::Tetronimo::simpleSpawn() {
 	}
 }
 
-tetris_clone::TetrisBoard::TetrominoTile tetris_clone::Tetronimo::toTile() const noexcept {
+tetris_clone::TetrominoTile tetris_clone::Tetronimo::toTile() const noexcept {
 	switch (_classification) {
-	case Flavor::S: return TetrisBoard::TetrominoTile::S;
-	case Flavor::Z: return TetrisBoard::TetrominoTile::Z;
-	case Flavor::T: return TetrisBoard::TetrominoTile::T;
-	case Flavor::J: return TetrisBoard::TetrominoTile::J;
-	case Flavor::L: return TetrisBoard::TetrominoTile::L;
-	case Flavor::I: return TetrisBoard::TetrominoTile::I;
-	case Flavor::O: return TetrisBoard::TetrominoTile::O;
+	case Flavor::S: return TetrominoTile::S;
+	case Flavor::Z: return TetrominoTile::Z;
+	case Flavor::T: return TetrominoTile::T;
+	case Flavor::J: return TetrominoTile::J;
+	case Flavor::L: return TetrominoTile::L;
+	case Flavor::I: return TetrominoTile::I;
+	case Flavor::O: return TetrominoTile::O;
 	default: exit(-34);
 	}
+}
+
+void tetris_clone::Tetronimo::tetroPositions(Vector2c(&src)[4], const Rotation r, const TetrominoTile t) {
+	int rotIndex;
+	switch (r) {
+	case Rotation::North: rotIndex = 0;
+		break;
+	case Rotation::East: rotIndex = 1;
+		break;
+	case Rotation::South: rotIndex = 2;
+		break;
+	case Rotation::West: rotIndex = 3;
+		break;
+	}
+
+	const std::array<std::array<Vector2c, 4>, 4>* arrPtr;
+
+	switch (t) {
+	case TetrominoTile::I: arrPtr = &I_ROTATIONS;
+		break;
+	case TetrominoTile::J: arrPtr = &J_ROTATIONS;
+		break;
+	case TetrominoTile::L: arrPtr = &L_ROTATIONS;
+		break;
+	case TetrominoTile::O: arrPtr = &O_ROTATIONS;
+		break;
+	case TetrominoTile::S: arrPtr = &S_ROTATIONS;
+		break;
+	case TetrominoTile::T: arrPtr = &T_ROTATIONS;
+		break;
+	case TetrominoTile::Z: arrPtr = &Z_ROTATIONS;
+		break;
+	default: arrPtr = nullptr;
+		break;
+	}
+	for (int i = 0; i < 4; ++i) {
+		src[i].first  = (*arrPtr)[rotIndex][i].first;
+		src[i].second = (*arrPtr)[rotIndex][i].second;
+	}
+
 }

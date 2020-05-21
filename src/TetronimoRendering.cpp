@@ -1,6 +1,7 @@
 #include "TetronimoRendering.h"
 
 #include "drawobjey/Sprite.h"
+#include "drawobjey/SpriteHandler.h"
 
 #include <Magnum/Math/Color.h>
 
@@ -71,7 +72,8 @@ constexpr uint16_t maxsizey = std::numeric_limits<short>::max();
 
 }
 
-void tetris_clone::TetronimoRendering::redoTetronimoRender(tetris_clone::Tetronimo& tetronimi, const Magnum::Vector2 * src, Magnum::Int size, bool makeVisible = true) {
+void tetris_clone::TetronimoRendering::redoTetronimoRender(tetris_clone::Tetronimo& tetronimi, const Magnum::Vector2 * src, Magnum::Int size, resource::RsrcId assetId, drawobjey::SpriteHandler& handler, bool makeVisible = true) {
+	using namespace drawobjey;
 	_transform.resetTransformation();
 	_transform.translate({_xScale*tetronimi.x(), _yScale*tetronimi.y()});
 
@@ -133,7 +135,26 @@ void tetris_clone::TetronimoRendering::redoTetronimoRender(tetris_clone::Tetroni
 		newChild->translate({ _xScale * tetri[i].x(), _yScale * tetri[i].y() });
 		{
 			using namespace Magnum::Math::Literals;
-			auto* my = new RudimentarySprite(*newChild, static_cast<Magnum::Int>(16), static_cast<Magnum::Int>(16), static_cast<Magnum::Float>(1.f / 8.f), _texture, _tl, _drawables, _shader);
+			auto vb = handler.getVertexBuffer(assetId);
+			auto ib = handler.getIndicesBuffer(assetId);
+			auto uvData = handler.getTexCoordData(assetId);
+			//auto* my = new RudimentarySprite(*newChild, static_cast<Magnum::Int>(16), static_cast<Magnum::Int>(16), static_cast<Magnum::Float>(1.f / 8.f), _texture, _tl, _drawables, _shader);
+			auto& textura = handler.getTexture(assetId);
+			std::vector<Magnum::Vector2> hiThere{ uvData.cbegin(), uvData.cend() };
+
+			auto* my = new RudimentarySprite(*newChild, static_cast<Magnum::Int>(16),
+				static_cast<Magnum::Int>(16),
+				1.f / 8.f,
+				textura,
+				vb.offset,
+				ib.offset,
+				*vb.buffer,
+				uvData,
+				*ib.buffer,
+				_tl,
+				_drawables,
+				_shader
+			);
 
 			auto rawColor = static_cast<std::underlying_type_t<Tetronimo::Flavor>>(tetronimi.flavor());
 
@@ -204,11 +225,13 @@ bool tetris_clone::TetronimoRendering::purgeTiles(tetris_clone::TetronimoRenderi
 }
 
 void tetris_clone::TetronimoRendering::setTilesVisibility(bool isVisible) {
+	using namespace drawobjey;
 	for (auto& child : _holder.children()) 
 		dynamic_cast<RudimentarySprite*>(child.features().first())->setVisibility(isVisible);
 }
 
 void tetris_clone::TetronimoRendering::updateColor(const tetris_clone::Tetronimo tetronimi) {
+	using namespace drawobjey;
 	auto col = static_cast<std::underlying_type_t<tetris_clone::Tetronimo::Flavor>>(tetronimi.flavor());
 
 	for (auto& tile : _holder.children()) {

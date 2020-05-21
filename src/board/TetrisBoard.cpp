@@ -1,22 +1,42 @@
 #include "TetrisBoard.h"
+#include "tetromino/Tetronimo.h"
 #include <algorithm>
 #include <type_traits>
 #include <ciso646>
+#include <optional>
+#ifdef TETRIS_DEBUG_ASSERTIONS
+#include <assert.h>
+#endif
+
+std::optional<tetris_clone::Tetronimo::Rotation> toTetronimoRotation(char dir) {
+#ifdef TETRIS_DEBUG_ASSERTIONS
+	assert(!(dir < 0) && dir < 4);
+#endif
+	using namespace tetris_clone;
+	switch (dir) {
+	case 0: return Tetronimo::Rotation::North;
+		break;
+	case 1: return Tetronimo::Rotation::East;
+		break;
+	case 2: return Tetronimo::Rotation::South;
+		break;
+	case 3: return Tetronimo::Rotation::West;
+		break;
+	default: return {};
+	}
+}
 
 #ifndef DEBUG_ME
 tetris_clone::TetrisBoard::TetrisBoard() noexcept : _firstRowFull{ -1 }, _clearedRows{ -1, -1, -1, -1 }, _clearedRowsSize{}{
 #else
-tetris_clone::TetrisBoard::TetrisBoard() noexcept : _firstRowFull{ -1 }, _debugRep{}, _clearedRows{ -1, -1, -1, -1 }, _clearedRowsSize{} {
+tetris_clone::TetrisBoard::TetrisBoard() noexcept : _firstRowFull{ -1 }, _clearedRows{ -1, -1, -1, -1 }, _clearedRowsSize{}, rowsFullSize_{}, _debugRep{}{
 #endif
-
-	constexpr int sizec = sizeof(_Board[0]) / sizeof(Cell);
-	constexpr int sizer = (sizeof(_Board) / sizeof(Cell))/sizec;
 
 	_rowIsFull[(sizeof(_rowIsFull)/sizeof(bool))-1] = false;
 
-	for (int i = 0; i < sizer; ++i) {
-		for (int j = 0; j < sizec; ++j) {
-			_Board[i][j] = { TetrominoTile::I, false };
+	for (int i = 0; i < ROW_LENGTH; ++i) {
+		for (int j = 0; j < COL_LENGTH; ++j) {
+			_Board[i][j] = { TetrominoTile::Null, false };
 		}
 	}
 }
@@ -25,37 +45,57 @@ bool tetris_clone::TetrisBoard::hasVacancy(unsigned int x, unsigned int y) const
 	int r = toRcCoordinatesY(y);
 	int c = toRcCoordinatesX(x);
 
-	if (_Board[r][c].hasTile)
+	if (_Board[r][c].type != TetrominoTile::Null)
 		return false;
 	else
 		return true;
 
 	//return false;
 }
-bool tetris_clone::TetrisBoard::isMortalitized(unsigned int x, unsigned int y) const noexcept {
+
+bool tetris_clone::TetrisBoard::getFullTetroPositions(Vector2c (&dst)[4], char x, char y) const {
+	int r = toRcCoordinatesY(y);
+	int c = toRcCoordinatesX(x);
+	if (_Board[r][c].type == TetrominoTile::Null) {
+		return false;
+	}
+
+	auto type = _Board[r][c].type;
+	auto rotation = toTetronimoRotation(_Board[r][c].rotation);
+
+	Vector2c results[4];
+
+	if (rotation) {
+		Tetronimo::tetroPositions(results, *rotation, type);
+	}
+	else {
+		return false;
+	}
+
+	int posX = _Board[r][c].x;
+	int posY = _Board[r][c].y;
+	for (int i = 0; i < 4; ++i) {
+		dst[i] = {posX + results[i].first, posY + results[i].second };
+	}
+
+	return true;
+}
+tetris_clone::BoardCell tetris_clone::TetrisBoard::getCellInfo(int x, int y) const {
 	int r = toRcCoordinatesY(y);
 	int c = toRcCoordinatesX(x);
 
-	if (_Board[r][c].mortalitized)
-		return true;
-	else
-		return false;
+	return _Board[r][c];
 }
+
 int tetris_clone::TetrisBoard::toRcCoordinatesX(int x) const noexcept {
 	return x;
 }
 int tetris_clone::TetrisBoard::toRcCoordinatesY(int y) const noexcept {
-
-	constexpr int sizec = sizeof(_Board[0]) / sizeof(Cell);
-	constexpr int sizer = (sizeof(_Board) / sizeof(Cell))/sizec;
-	return (sizer - 1) - y;
+	return (ROW_LENGTH - 1) - y;
 }
 
 int tetris_clone::TetrisBoard::toTetrisCoordinatesR(int r) const noexcept {
-	constexpr int sizec = sizeof(_Board[0]) / sizeof(Cell);
-	constexpr int sizer = (sizeof(_Board) / sizeof(Cell))/sizec;
-
-	return (sizer - 1) - r;
+	return (ROW_LENGTH - 1) - r;
 }
 
 int tetris_clone::TetrisBoard::toTetrisCoordinatesC(int c) const noexcept {
@@ -63,38 +103,56 @@ int tetris_clone::TetrisBoard::toTetrisCoordinatesC(int c) const noexcept {
 }
 
 void tetris_clone::TetrisBoard::markRows() noexcept {
-	constexpr int sizec = sizeof(_Board[0]) / sizeof(Cell);
-	constexpr int sizer = (sizeof(_Board) / sizeof(Cell))/sizec;
 
-	bool fullMarkedRows[sizer];
+#if 1
+	bool fullMarkedRows[ROW_LENGTH];
 
-	for (int i = 0; i < sizer; ++i) {
+	for (int i = 0; i < ROW_LENGTH; ++i) {
 		fullMarkedRows[i] = true;
 		_rowIsFull[i] = true;
 	}
 
-	Cell (*rowPtr)[sizec] = _Board;
-	bool success{ true };
-	for (int i = 0; i < sizer; ++i) {
-		for (int j = 0; j < sizec; ++j) {
-			if (!rowPtr[i][j].hasTile) {
+	BoardCell (*rowPtr)[COL_LENGTH] = _Board;
+
+	for (int i = 0; i < ROW_LENGTH; ++i) {
+		for (int j = 0; j < COL_LENGTH; ++j) {
+			if (rowPtr[i][j].type == TetrominoTile::Null) {
 				fullMarkedRows[i] = false;
 				_rowIsFull[i] = false;
 				break;
 			}
 		}
-		if (_rowIsFull[i] and _firstRowFull < 0)
-			_firstRowFull = i;
+		if (_rowIsFull[i]) {
+			rowsFullSize_++;
+			if (_firstRowFull < 0) {
+				_firstRowFull = i;
+			}
+		}
 	}
+#endif
 }
 
 bool tetris_clone::TetrisBoard::isFull(int row) const noexcept { return _rowIsFull[row]; }
 
 
-void tetris_clone::TetrisBoard::placeTetromino(int(&x)[4], int(&y)[4], tetris_clone::TetrisBoard::TetrominoTile tileType) {
+void tetris_clone::TetrisBoard::placeTetromino(int(&x)[4], int(&y)[4], const tetris_clone::Tetronimo& tetro) {
 	for (int i = 0; i < 4; ++i) {
-		_Board[toRcCoordinatesY(y[i])][toRcCoordinatesX(x[i])].hasTile = true;
-		_Board[toRcCoordinatesY(y[i])][toRcCoordinatesX(x[i])].type = tileType;
+		_Board[toRcCoordinatesY(y[i])][toRcCoordinatesX(x[i])].type = tetro.toTile();
+		_Board[toRcCoordinatesY(y[i])][toRcCoordinatesX(x[i])].slotIndex = i;
+		char rot;
+		switch (tetro.rotation()) {
+		case Tetronimo::Rotation::North: rot = 0;
+			break;
+		case Tetronimo::Rotation::East: rot = 1;
+			break;
+		case Tetronimo::Rotation::South: rot = 2;
+			break;
+		case Tetronimo::Rotation::West: rot = 3;
+			break;
+		}
+		_Board[toRcCoordinatesY(y[i])][toRcCoordinatesX(x[i])].rotation = rot;
+		_Board[toRcCoordinatesY(y[i])][toRcCoordinatesX(x[i])].x = tetro.x();
+		_Board[toRcCoordinatesY(y[i])][toRcCoordinatesX(x[i])].y = tetro.y();
 
 	}
 	markRows();
@@ -104,12 +162,11 @@ void tetris_clone::TetrisBoard::placeTetromino(int(&x)[4], int(&y)[4], tetris_cl
 }
 
 int tetris_clone::TetrisBoard::indexOfFullRow(int rowIndex) const noexcept {
-	constexpr int sizec = sizeof(_Board[0]) / sizeof(Cell);
-	if (_firstRowFull < 0 or rowIndex > (sizec-1) )
+	if (_firstRowFull < 0 or rowIndex > (COL_LENGTH-1) )
 		return -1;
 	if (_firstRowFull > rowIndex or _firstRowFull == rowIndex)
 		return _firstRowFull;
-	for (int i = _firstRowFull + 1; i < sizec; ++i) {
+	for (int i = _firstRowFull + 1; i < COL_LENGTH; ++i) {
 		if (_rowIsFull[i])
 			return i;
 	}
@@ -117,43 +174,39 @@ int tetris_clone::TetrisBoard::indexOfFullRow(int rowIndex) const noexcept {
 }
 
 tetris_clone::TetrisBoard::RowsClearedT tetris_clone::TetrisBoard::clearFullRows() noexcept {
-	constexpr int sizec = sizeof(_Board[0]) / sizeof(Cell);
-	constexpr int sizer = (sizeof(_Board) / sizeof(Cell))/sizec;
 
 
-	int higherStartingFullRowIndex{};
-	int higherEndingRowIndex{};
-	int fullRowsCount{};
-//	int fullRowsCount2nd{};
-
-	int fullRowsCount2nd{};
-	int startingFullRowIndex2nd = -1;
-
-	int lowerStartingFullRowIndex{};
-	int lowerEndingRowIndex{};
 
 	clearClearedRows();
 
-	for (int i = sizer - 1; !(i < 0); --i) {
+	int fullRowsCountB{};
+	int startingFullRowsIndexB{};
+	int endingFullRowsIndexB{};
+
+	for (int i = ROW_LENGTH - 1; !(i < 0); --i) {
 		if (_rowIsFull[i]) {
 			if ( !_rowIsFull[i+1] )
-				higherEndingRowIndex = i+1;
-			fullRowsCount += 1;
-			higherStartingFullRowIndex = i;
+				endingFullRowsIndexB = i+1;
+			fullRowsCountB += 1;
+			startingFullRowsIndexB = i;
 		}
-		else if ( _rowIsFull[i+1] ) {//wasFullLastIteration) {
-			insertClearedRow(i+1);
+		else if ( _rowIsFull[i+1] ) {
+			insertClearedRow(i+1); // TODO: Useless?
 			break;
 		}
 	}
 
-	if (fullRowsCount) {
-		for (int i = higherStartingFullRowIndex - 2; !(i < 0); --i) {
+	int fullRowsCountA{};
+	int startingFullRowsIndexA{};
+	int endingFullRowsIndexA{};
+
+	if (fullRowsCountB) {
+		for (int i = startingFullRowsIndexB - 2; !(i < 0); --i) {
 			if (_rowIsFull[i]) {
 				if (!_rowIsFull[i + 1])
-					lowerEndingRowIndex = i + 1;
-				fullRowsCount2nd += 1;
-				lowerStartingFullRowIndex = i;
+					endingFullRowsIndexA = i + 1;
+				fullRowsCountA += 1;
+				startingFullRowsIndexA = i;
 			}
 			else if (_rowIsFull[i + 1]) {
 				break;
@@ -161,57 +214,59 @@ tetris_clone::TetrisBoard::RowsClearedT tetris_clone::TetrisBoard::clearFullRows
 		}
 	}
 
-	if (fullRowsCount != 0) {
-		Cell* first = &_Board[0][0];
-		Cell* last = &_Board[higherStartingFullRowIndex][0];
-		std::copy_backward(first, last, &_Board[higherEndingRowIndex][0]);//&_Board[sizer-1][sizec-1]+1);
-		std::copy_backward(&_rowIsFull[0], &_rowIsFull[higherStartingFullRowIndex], &_rowIsFull[higherEndingRowIndex]);
+	if (fullRowsCountB != 0) {
+		BoardCell* first = &_Board[0][0];
+		BoardCell* last = &_Board[startingFullRowsIndexB][0];
+		std::copy_backward(first, last, &_Board[endingFullRowsIndexB][0]);
+		std::copy_backward(&_rowIsFull[0], &_rowIsFull[startingFullRowsIndexB], &_rowIsFull[endingFullRowsIndexB]);
 
-		// if the earliest filled row recorded was the rows removed, then there wa only one chunk of filled rows
-		if (_firstRowFull == higherStartingFullRowIndex)//earliestRow)
+		// if the earliest filled row recorded was the rows removed, then there was only one chunk of filled rows
+		if (_firstRowFull == startingFullRowsIndexB)
 			_firstRowFull = -1;
 		else
-			_firstRowFull += fullRowsCount;
+			_firstRowFull += fullRowsCountB;
 	}
-	if (fullRowsCount2nd != 0 and fullRowsCount != 0) {
-		Cell* first = &_Board[0][0];
-		Cell* last = &_Board[lowerStartingFullRowIndex + fullRowsCount][0];
-		std::copy_backward(first, last, &_Board[lowerEndingRowIndex + fullRowsCount][0]);
-		std::copy_backward(&_rowIsFull[0], &_rowIsFull[lowerStartingFullRowIndex + fullRowsCount], &_rowIsFull[lowerEndingRowIndex+fullRowsCount]);
+	if (fullRowsCountA != 0 and fullRowsCountB != 0) {
+		BoardCell* first = &_Board[0][0];
+		BoardCell* last = &_Board[startingFullRowsIndexA + fullRowsCountB][0];
+		std::copy_backward(first, last, &_Board[endingFullRowsIndexA + fullRowsCountB][0]);
+		std::copy_backward(&_rowIsFull[0], &_rowIsFull[startingFullRowsIndexA + fullRowsCountB], &_rowIsFull[endingFullRowsIndexA+fullRowsCountB]);
 	}
 
 #ifdef DEBUG_ME
 	updateString();
 #endif
-	auto narliestRow = toTetrisCoordinatesR(higherEndingRowIndex-1);
-	decltype(narliestRow) narliestRow2nd;
+	auto narliestRow = toTetrisCoordinatesR(endingFullRowsIndexB-1);
+	decltype(narliestRow) narliestRow2nd = -1;
 
-	if (fullRowsCount2nd)
-		narliestRow2nd = toTetrisCoordinatesR(lowerEndingRowIndex - 1);
+	if (fullRowsCountA)
+		narliestRow2nd = toTetrisCoordinatesR(endingFullRowsIndexA - 1);
 
-	return RowsClearedT{static_cast<decltype(RowsClearedT::sizeFirst)>(fullRowsCount), static_cast<decltype(RowsClearedT::rowIndexFirst)>(narliestRow),
-	static_cast<decltype(RowsClearedT::sizeSecond)>(fullRowsCount2nd), static_cast<decltype(RowsClearedT::rowIndexSecond)>(narliestRow2nd)};
+	rowsFullSize_++;
+
+	return RowsClearedT{static_cast<decltype(RowsClearedT::sizeFirst)>(fullRowsCountB), static_cast<decltype(RowsClearedT::rowIndexFirst)>(narliestRow),
+	static_cast<decltype(RowsClearedT::sizeSecond)>(fullRowsCountA), static_cast<decltype(RowsClearedT::rowIndexSecond)>(narliestRow2nd)};
 }
 
 #ifdef DEBUG_ME
 void tetris_clone::TetrisBoard::updateString() {
-	constexpr int sizec = sizeof(_Board[0]) / sizeof(Cell);
-	constexpr int sizer = (sizeof(_Board) / sizeof(Cell))/sizec;
 
 	if (_debugRep.empty()) {
-		_debugRep = std::string((sizec + 1) * sizer, ' ');
+		_debugRep = std::string((COL_LENGTH + 1) * ROW_LENGTH, ' ');
 	}
 
 	int index = 0;
-	for (int i = 0; i < sizer; ++i) {
-		for (int j = 0; j < sizec; ++j) {
-			if (!_Board[i][j].hasTile) {
+	for (int i = 0; i < ROW_LENGTH; ++i) {
+		for (int j = 0; j < COL_LENGTH; ++j) {
+#if 0
+			if (_Board[i][j].type == TetrominoTile::Null) {
 				if ((i) % 5 == 4)
 					_debugRep[index] = '_';
 				else
 					_debugRep[index] = ' ';
 			}
 			else {
+#endif
 				switch (_Board[i][j].type) {
 				case TetrominoTile::I: _debugRep[index] = 'i';
 					break;
@@ -227,8 +282,15 @@ void tetris_clone::TetrisBoard::updateString() {
 					break;
 				case TetrominoTile::O: _debugRep[index] = 'o';
 					break;
+				default: if ((i) % 5 == 4)
+					_debugRep[index] = '_';
+					   else
+					_debugRep[index] = '.';
+					break;
 				}
-			}
+#if 0
+				}
+#endif
 			index++;
 		}
 		_debugRep[index++] = '\n';
@@ -257,3 +319,10 @@ void tetris_clone::TetrisBoard::clearClearedRows() {
 	while (_clearedRows[i] != -1)
 		_clearedRows[i++] = -1;
 }
+
+#ifdef DEBUG_ME
+std::string_view tetris_clone::TetrisBoard::getStr() const {
+	int offset = 20 * 11;
+	return std::string_view(_debugRep.c_str() + offset);
+}
+#endif

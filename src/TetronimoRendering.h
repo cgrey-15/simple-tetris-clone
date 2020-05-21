@@ -6,7 +6,11 @@
 #include<Magnum/Shaders/Flat.h>
 
 #include "tetromino/Tetronimo.h"
+#include "support/ResourceProfile.h"
 
+namespace drawobjey {
+	class SpriteHandler;
+}
 namespace tetris_clone {
 	class Tetronimo;
 	class TetronimoRendering : public Magnum::SceneGraph::AbstractFeature2D {
@@ -42,7 +46,7 @@ namespace tetris_clone {
 			_drawables{drawGroup}
 		{}
 
-		void redoTetronimoRender(Tetronimo& tetronimi, const Magnum::Vector2 * src, Magnum::Int size, bool makeVisible);
+		void redoTetronimoRender(Tetronimo& tetronimi, const Magnum::Vector2 * src, Magnum::Int size, resource::RsrcId assetId, drawobjey::SpriteHandler& handler, bool makeVisible);
 		void updateTetronimoRender(const Tetronimo& tetronimi, bool rotated = false, Tetronimo::Rotation = Tetronimo::Rotation::North) noexcept;
 		void updateHolder(Object2D& newHolder);
 		void updateColor(const Tetronimo tetronimi);
