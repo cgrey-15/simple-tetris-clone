@@ -67,12 +67,10 @@ ${TetrisClone_RESOURCES})
 #message(WARNING ${TexturedTriangle_RESOURCES})
 
 
-if($<CONFIG:$<CONFIG>>)
-message("Nope")
-endif()
-#add_custom_target(printdebugtypetarg COMMAND ${CMAKE_COMMAND} -E echo "$<CONFIG>")
 
-target_include_directories(TetrisClone PRIVATE ./)
+
+target_include_directories(TetrisClone PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(TetrisClone PRIVATE ${CMAKE_SOURCE_DIR}/friends)
 target_compile_features(TetrisClone PRIVATE cxx_std_20)
 target_compile_definitions(TetrisClone PRIVATE $<$<CONFIG:Debug>:TETRIS_DEBUG_ASSERTIONS>)
 target_link_libraries(TetrisClone PRIVATE
@@ -83,7 +81,6 @@ target_link_libraries(TetrisClone PRIVATE
 	Magnum::Trade
 	Magnum::SceneGraph
 	Magnum::Shaders
-	ctla
 	nlohmann_json::nlohmann_json
 	)
 	#Magnum::MeshTools
